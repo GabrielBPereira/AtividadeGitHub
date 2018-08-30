@@ -1,0 +1,83 @@
+# coding: utf-8
+
+import json
+import urllib2
+import sys
+
+def obterNomeSeguidor(nomeSeguidor):
+	dadosSeguidores = []
+	API = 'https://api.github.com/users/{0}'
+	
+	url_processada = API.format(nomeSeguidor)
+
+	textoJson = verificarJSONExistente(url_processada)
+	textoJsonProcessado = json.loads(textoJson)
+
+	return textoJsonProcessado['name']
+
+def obterRepositorios(nomeSeguidor):
+	nomes = []
+	API = 'https://api.github.com/users/{0}/repos'
+	
+	url_processada = API.format(nomeSeguidor)
+
+	textoJson = verificarJSONExistente(url_processada)
+	textoJsonProcessado = json.loads(textoJson)
+
+	
+	for repositorio in textoJsonProcessado:
+		nomes.append(repositorio['name'])
+
+	return nomes
+		 
+def verificarJSONExistente(linkAPI):
+	try:
+		arquivo = open(linkAPI.replace('/', '-') + '.txt', 'r')
+		textoJson = arquivo.read()
+		print 'entrei aqui'
+		return textoJson
+	except Exception:
+		try:
+			arq = open(linkAPI.replace('/', '-') + '.txt', 'w')
+			textoJson = urllib2.urlopen(linkAPI).read()
+			arq.write(textoJson)
+			arq.close()
+			return textoJson
+		except Exception:
+			print 'Deu exceção linha 42'
+			
+
+API = 'https://api.github.com/users/{0}'
+
+usuario = raw_input('Nome do usuario GitHub: ')
+linkAPI = API.format(usuario)
+
+textoJson = verificarJSONExistente(linkAPI)
+
+textoJsonProcessado = json.loads(textoJson)
+
+urlUsuarios = textoJsonProcessado['followers_url']
+
+textoUrlProcessado = verificarJSONExistente(urlUsuarios)
+
+usuariosJson = json.loads(textoUrlProcessado)
+
+contadorSeguidores = textoJsonProcessado['followers']
+
+print 'Usuário da Consulta: ', textoJsonProcessado['name'], '\n'
+
+print contadorSeguidores, ' seguidores: ', '\n'
+
+contUsuarios = 0
+contRepositorios = 0
+
+for usuario in usuariosJson:
+	nome = usuario['login']
+
+	print obterNomeSeguidor(nome), ' ', contUsuarios+1, '\n'
+
+	for repositorio in obterRepositorios(nome):	
+		print '\t', repositorio,  ' ', contRepositorios+1
+		contRepositorios += 1
+	print '\n'
+	contUsuarios += 1
